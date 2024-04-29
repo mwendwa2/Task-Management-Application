@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Management Application</title>
+  <!-- Firebase JavaScript SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f0f0f0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    input[type="text"] {
+      width: calc(100% - 80px);
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007bff;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+    button.delete {
+      background-color: #dc3545;
+      color: #fff;
+    }
+    button.delete:hover {
+      background-color: #c82333;
+    }
+  </style>
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAiAZmc50uoFhf4Omuo6w2dYJ5Ql72dp8w",
+      authDomain: "plp-web-16f25.firebaseapp.com",
+      projectId: "plp-web-16f25",
+      storageBucket: "plp-web-16f25.appspot.com",
+      messagingSenderId: "225205037556",
+      appId: "1:225205037556:web:0608f5fe858bbc86e1f1a1",
+      measurementId: "G-QD5ZSXEGBL"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Function to add a task
+    function addTask() {
+      const taskInput = document.getElementById("task-input");
+      const taskText = taskInput.value.trim();
+      if (taskText !== "") {
+        db.collection("tasks").add({
+          text: taskText,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(() => {
+          console.log("Task added successfully");
+          taskInput.value = ""; // Clear input field
+          fetchTasks(); // Fetch and display updated tasks
+        })
+        .catch(error => {
+          console.error("Error adding task:", error);
+        });
+      }
+    }
+
+    // Function to fetch tasks
+    function fetchTasks() {
+      const taskList = document.getElementById("task-list");
+      taskList.innerHTML = ""; // Clear previous tasks
+      db.collection("tasks")
+        .orderBy("createdAt", "desc")
+        .get()
+        .then(querySnapshot => {
+          querySnapshot.forEach(doc => {
+            const taskData = doc.data();
+            const taskId = doc.id;
+            const taskText = taskData.text;
+            const taskItem = document.createElement("li");
+            taskItem.textContent = taskText;
+            taskItem.setAttribute("data-id", taskId);
+            taskList.appendChild(taskItem);
+            // Add delete button to each task
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.className = "delete";
+            deleteButton.addEventListener("click", () => {
+              deleteTask(taskId);
+            });
+            taskItem.appendChild(deleteButton);
+          });
+        })
+        .catch(error => {
+          console.error("Error fetching tasks:", error);
+        });
+    }
+
+    // Function to delete a task
+    function deleteTask(taskId) {
+      db.collection("tasks").doc(taskId)
+        .delete()
+        .then(() => {
+          console.log("Task deleted successfully");
+          fetchTasks(); // Fetch and display updated tasks
+        })
+        .catch(error => {
+          console.error("Error deleting task:", error);
+        });
+    }
+
+    // Call fetchTasks on page load
+    window.addEventListener("load", fetchTasks);
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>Task Management Application</h1>
+    <input type="text" id="task-input" placeholder="Enter task...">
+    <button onclick="addTask()">Add Task</button>
+    <ul id="task-list"></ul>
+  </div>
+</body>
+</html>
